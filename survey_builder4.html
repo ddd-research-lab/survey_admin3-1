@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>アンケートビルダー</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f4f4f2;min-height:100vh;padding:20px 16px;color:#111}
+h1.app-title{font-size:20px;font-weight:600;margin-bottom:16px;color:#111;max-width:1100px;margin-left:auto;margin-right:auto}
+.app{display:grid;grid-template-columns:1fr 1fr;min-height:860px;border:1px solid #ddd;border-radius:12px;overflow:hidden;background:#fff;max-width:1100px;margin:0 auto}
+.panel{padding:1.25rem;overflow-y:auto}
+.left{background:#fff;border-right:1px solid #e8e8e8}
+.right{background:#f8f8f6}
+.ph{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;margin-bottom:12px;border-bottom:1px solid #e8e8e8}
+.pt{font-size:11px;font-weight:600;color:#888;letter-spacing:.07em;text-transform:uppercase}
+.sec{margin-bottom:12px}
+.lbl{font-size:12px;color:#666;margin-bottom:4px}
+input[type=text],input[type=number],textarea,select{width:100%;font-size:13px;padding:6px 9px;border-radius:7px;border:1px solid #ddd;background:#fff;color:#111;font-family:inherit;outline:none;transition:border-color .15s}
+input[type=text]:focus,input[type=number]:focus,textarea:focus,select:focus{border-color:#555}
+input[type=number]{width:72px}
+textarea{resize:vertical;min-height:44px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;font-size:12px;font-weight:500;border-radius:7px;border:1px solid #ddd;background:#fff;color:#111;cursor:pointer;font-family:inherit;transition:background .12s}
+.btn:hover{background:#f0f0ee}
+.bp{background:#111;color:#fff;border-color:transparent}
+.bp:hover{background:#333}
+.bd{color:#c0392b;border-color:#f5c6c6}
+.bd:hover{background:#fdf0f0}
+.divider{height:1px;background:#e8e8e8;margin:10px 0}
+.trow{display:flex;align-items:center;justify-content:space-between}
+.tog{position:relative;display:inline-block;width:36px;height:20px}
+.tog input{opacity:0;width:0;height:0}
+.sl{position:absolute;inset:0;background:#ccc;border-radius:999px;cursor:pointer;transition:.2s}
+.sl:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+input:checked+.sl{background:#111}
+input:checked+.sl:before{transform:translateX(16px)}
+.qcard{background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:10px;margin-bottom:6px}
+.qcard.active{border-color:#555}
+.qh{display:flex;align-items:flex-start;gap:6px;margin-bottom:6px}
+.qn{font-size:11px;font-weight:600;color:#888;min-width:18px;padding-top:2px}
+.qb{flex:1}
+.badge{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;margin-bottom:4px}
+.b-r{background:#E6F1FB;color:#0C447C}
+.b-c{background:#E1F5EE;color:#085041}
+.b-t{background:#FAEEDA;color:#633806}
+.b-f{background:#FBEAF0;color:#72243E}
+.qa{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.addq{width:100%;padding:8px;font-size:12px;border:1px dashed #ccc;border-radius:8px;background:transparent;color:#888;cursor:pointer;font-family:inherit;transition:all .12s}
+.addq:hover{background:#f8f8f6;color:#111;border-color:#999}
+.or{display:flex;gap:6px;margin-bottom:4px;align-items:center}
+.or input[type=text]{flex:1}
+.tabs{display:flex;gap:4px;margin-bottom:10px}
+.tab{padding:4px 11px;font-size:12px;border-radius:7px;border:1px solid #ddd;cursor:pointer;color:#888;background:transparent;font-family:inherit;transition:all .12s}
+.tab.on{background:#111;color:#fff;border-color:transparent}
+.code{font-family:'Courier New',monospace;font-size:11px;padding:10px;background:#f4f4f2;border:1px solid #e0e0db;border-radius:8px;max-height:220px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;color:#111}
+.info{font-size:12px;color:#555;padding:8px 11px;background:#e8f4f8;border-radius:8px;margin-bottom:8px;line-height:1.6}
+.pframe{border-radius:10px;padding:16px;margin-bottom:8px;transition:background .3s;border:1px solid #e8e8e8}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:4px}
+.scard{border-radius:8px;padding:7px;cursor:pointer;border:2px solid transparent;background:#f8f8f6;transition:border-color .15s}
+.scard:hover{border-color:#bbb}
+.scard.sel{border-color:#111}
+.scard-prev{display:flex;align-items:center;justify-content:center;height:32px;font-size:11px;gap:3px}
+.scard-name{font-size:11px;text-align:center;color:#666;margin-top:3px}
+.dot{width:8px;height:8px;border-radius:50%}
+.editbox{display:none;margin-top:10px;background:#f8f8f6;border-radius:8px;padding:12px;border:1px solid #e0e0db}
+.hint{font-size:11px;color:#999;margin-top:3px}
+.minrow{display:flex;align-items:center;gap:8px}
+@media(max-width:700px){
+  .app{grid-template-columns:1fr;min-height:auto}
+  .left{border-right:none;border-bottom:1px solid #e8e8e8}
+}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:32px;max-width:680px;width:100%;position:relative;font-family:'Helvetica Neue',Arial,sans-serif}
+.modal-close{position:absolute;top:16px;right:18px;font-size:20px;background:none;border:none;cursor:pointer;color:#888;line-height:1}
+.modal-close:hover{color:#111}
+.modal h2{font-size:18px;font-weight:600;color:#111;margin-bottom:4px}
+.modal .modal-lead{font-size:13px;color:#666;margin-bottom:20px;line-height:1.6}
+.modal h3{font-size:13px;font-weight:600;color:#111;margin:20px 0 8px;padding-left:10px;border-left:3px solid #111}
+.modal p,.modal li{font-size:13px;color:#444;line-height:1.75}
+.modal ul,.modal ol{padding-left:18px;margin:4px 0 8px}
+.modal li{margin-bottom:3px}
+.modal .step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+.modal .step-num{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#111;color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.modal .step-body{flex:1}
+.modal .step-title{font-size:13px;font-weight:600;color:#111;margin-bottom:2px}
+.modal .step-desc{font-size:12px;color:#555;line-height:1.65}
+.modal .badge-demo{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;margin:0 2px}
+.modal .note{background:#f4f4f2;border-radius:8px;padding:10px 12px;font-size:12px;color:#555;margin-top:8px;line-height:1.65}
+.modal .sep{height:1px;background:#e8e8e8;margin:18px 0}
+.help-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;font-size:12px;font-weight:500;border-radius:7px;border:1px solid #ddd;background:#fff;color:#111;cursor:pointer;font-family:inherit;transition:background .12s}
+.help-btn:hover{background:#f0f0ee}
+</style>
+</head>
+<body>
+<div style="display:flex;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto 16px">
+  <h1 style="font-size:20px;font-weight:600;color:#111">アンケートビルダー</h1>
+  <button class="help-btn" onclick="openHelp()">? 使い方</button>
+</div>
+<div class="app">
+  <div class="panel left">
+    <div class="ph"><span class="pt">エディター</span><button class="btn bp" onclick="addQ()">+ 質問追加</button></div>
+
+    <div class="sec"><div class="lbl">タイトル</div><input type="text" id="sTitle" value="アンケート" oninput="rp()"></div>
+    <div class="sec"><div class="lbl">説明文</div><textarea id="sDesc" oninput="rp()" placeholder="任意の説明文"></textarea></div>
+    <div class="sec"><div class="lbl">JSONBin APIキー</div><input type="text" id="apiKey" placeholder="$2a$10$..."></div>
+    <div class="sec"><div class="lbl">Bin ID（空欄=自動作成）</div><input type="text" id="binId" placeholder="任意"></div>
+    <div class="divider"></div>
+    <div class="trow sec"><span class="lbl" style="margin-bottom:0">回答後に集計結果を表示</span><label class="tog"><input type="checkbox" id="showRes" checked onchange="rp()"><span class="sl"></span></label></div>
+    <div class="trow sec"><span class="lbl" style="margin-bottom:0">重複回答チェック（localStorage）</span><label class="tog"><input type="checkbox" id="dupeChk" onchange="rp()"><span class="sl"></span></label></div>
+    <div class="trow sec"><span class="lbl" style="margin-bottom:0">回答者数を表示する</span><label class="tog"><input type="checkbox" id="showCount" checked onchange="rp()"><span class="sl"></span></label></div>
+    <div id="showCountOpts" class="sec" style="padding-left:2px">
+      <div class="lbl">表示タイミング</div>
+      <select id="countTiming" onchange="rp()">
+        <option value="before">フォーム上部に常時表示</option>
+        <option value="after">送信後のみ表示</option>
+        <option value="both">常時表示 + 送信後も表示</option>
+      </select>
+      <div class="hint" style="margin-top:4px">「〇人が回答済み」と表示されます</div>
+    </div>
+    <div class="divider"></div>
+    <div class="sec">
+      <div class="lbl">送信完了メッセージ</div>
+      <input type="text" id="successMsg" value="回答ありがとうございました！" oninput="rp()" placeholder="回答ありがとうございました！">
+      <div class="hint">送信ボタンを押した後に表示されるメッセージ</div>
+    </div>
+    <div class="sec">
+      <div class="lbl">送信完了サブメッセージ（任意）</div>
+      <textarea id="successSubMsg" oninput="rp()" placeholder="ご協力いただきありがとうございます。結果は後日公開予定です。" style="min-height:52px"></textarea>
+    </div>
+    <div class="divider"></div>
+
+    <div class="sec">
+      <div class="lbl" style="margin-bottom:6px">デザインテーマ</div>
+      <div class="grid3" id="themeGrid"></div>
+    </div>
+    <div class="sec">
+      <div class="lbl" style="margin-bottom:6px">選択肢のスタイル</div>
+      <div class="grid3" id="btnStyleGrid"></div>
+    </div>
+    <div class="divider"></div>
+
+    <div id="qList"></div>
+    <button class="addq" onclick="addQ()">＋ 質問を追加する</button>
+
+    <div class="editbox" id="editBox">
+      <div style="font-size:13px;font-weight:600;color:#111;margin-bottom:8px">質問を編集</div>
+      <div class="sec"><div class="lbl">質問文</div><input type="text" id="eText" oninput="ue()"></div>
+      <div class="sec">
+        <div class="lbl">タイプ</div>
+        <select id="eType" onchange="uet()">
+          <option value="radio">単一選択（ラジオボタン）</option>
+          <option value="checkbox">複数選択（チェックボックス）</option>
+          <option value="text">自由記述（テキストのみ）</option>
+          <option value="freeplus">自由記述 + 選択肢</option>
+        </select>
+      </div>
+
+      <div id="optsEd" class="sec">
+        <div class="lbl">選択肢</div>
+        <div id="optList"></div>
+        <button class="btn" style="margin-top:4px;font-size:12px" onclick="addOpt()">＋ 追加</button>
+      </div>
+
+      <div id="freeLabelEd" class="sec" style="display:none">
+        <div class="lbl">自由記述欄のラベル</div>
+        <input type="text" id="eFreeLabel" placeholder="その他・自由なご意見など" oninput="ue()">
+        <div class="hint">選択肢の下にテキスト入力欄を追加します</div>
+      </div>
+      <div id="freePlaceholderEd" class="sec" style="display:none">
+        <div class="lbl">自由記述欄のプレースホルダー</div>
+        <input type="text" id="eFreePlaceholder" placeholder="自由にご記入ください" oninput="ue()">
+      </div>
+
+      <div id="placeholderEd" class="sec" style="display:none">
+        <div class="lbl">プレースホルダーテキスト</div>
+        <input type="text" id="ePlaceholder" placeholder="自由にご記入ください" oninput="ue()">
+      </div>
+
+      <div id="minSelEd" class="sec" style="display:none">
+        <div class="lbl">最低選択数</div>
+        <div class="minrow">
+          <input type="number" id="eMinSel" min="0" max="20" value="0" oninput="ue()" onblur="if(parseInt(this.value)<0||isNaN(parseInt(this.value)))this.value=0">
+          <span style="font-size:12px;color:#666">個以上（0 = 制限なし）</span>
+        </div>
+        <div class="hint" id="minSelHint">制限なし（0個以上）</div>
+      </div>
+
+      <div class="trow sec"><span class="lbl" style="margin-bottom:0">必須</span><label class="tog"><input type="checkbox" id="eReq" onchange="ue()"><span class="sl"></span></label></div>
+      <button class="btn" onclick="closeEdit()">閉じる</button>
+    </div>
+  </div>
+
+  <div class="panel right">
+    <div class="ph">
+      <span class="pt">プレビュー &amp; エクスポート</span>
+      <div style="display:flex;gap:4px">
+        <button class="btn tab on" onclick="showTab('preview')" id="t-prev">プレビュー</button>
+        <button class="btn tab" onclick="showTab('export')" id="t-exp">エクスポート</button>
+      </div>
+    </div>
+    <div id="prevPane"><div class="pframe" id="prevContent"></div></div>
+    <div id="expPane" style="display:none">
+      <div class="info">手順: <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> で無料アカウント作成 → APIキー取得 → HTMLをダウンロードしてGitHub Pagesにアップロード → 埋め込みコードをはてなブログに貼り付け</div>
+      <div class="tabs">
+        <button class="tab on" onclick="sc('html')" id="ct-html">アンケートHTML</button>
+        <button class="tab" onclick="sc('embed')" id="ct-embed">埋め込みコード</button>
+      </div>
+      <div class="code" id="codeBox"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn bp" onclick="copyCode(this)">コピー</button>
+        <button class="btn" onclick="dlHTML()">HTMLダウンロード</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const THEMES=[
+  {id:'clean',name:'クリーン',bg:'#ffffff',card:'#f8f8f6',accent:'#222',text:'#111',sub:'#666',btn:'#222',btnTxt:'#fff',bar:'#378ADD',border:'#e0e0db',font:"'Helvetica Neue',Arial,sans-serif"},
+  {id:'midnight',name:'ミッドナイト',bg:'#1a1a2e',card:'#16213e',accent:'#e94560',text:'#eaeaea',sub:'#9090a0',btn:'#e94560',btnTxt:'#fff',bar:'#e94560',border:'#2a2a4e',font:"Georgia,serif"},
+  {id:'forest',name:'フォレスト',bg:'#f0f7f0',card:'#fff',accent:'#2d6a4f',text:'#1b3a2d',sub:'#52796f',btn:'#2d6a4f',btnTxt:'#fff',bar:'#52796f',border:'#b7d5c9',font:"Georgia,serif"},
+  {id:'sakura',name:'さくら',bg:'#fff5f7',card:'#fff',accent:'#c9184a',text:'#3d0c1c',sub:'#c77daa',btn:'#c9184a',btnTxt:'#fff',bar:'#e5617e',border:'#ffc2d4',font:"sans-serif"},
+  {id:'ocean',name:'オーシャン',bg:'#e8f4f8',card:'#fff',accent:'#0077b6',text:'#03045e',sub:'#0096c7',btn:'#0077b6',btnTxt:'#fff',bar:'#00b4d8',border:'#90e0ef',font:"'Trebuchet MS',sans-serif"},
+  {id:'amber',name:'アンバー',bg:'#fffbf0',card:'#fff',accent:'#b5540b',text:'#3d1800',sub:'#9c6644',btn:'#b5540b',btnTxt:'#fff',bar:'#e76f51',border:'#f4d7b0',font:"Georgia,serif"},
+  {id:'minimal',name:'ミニマル',bg:'#fafafa',card:'#fff',accent:'#000',text:'#000',sub:'#888',btn:'#000',btnTxt:'#fff',bar:'#888',border:'#e8e8e8',font:"'Helvetica Neue',Arial,sans-serif"},
+  {id:'lavender',name:'ラベンダー',bg:'#f0eeff',card:'#fff',accent:'#534AB7',text:'#26215C',sub:'#7F77DD',btn:'#534AB7',btnTxt:'#fff',bar:'#7F77DD',border:'#CECBF6',font:"sans-serif"},
+  {id:'paper',name:'ペーパー',bg:'#f5f0e8',card:'#fdfaf4',accent:'#5c4a1e',text:'#3a2e1a',sub:'#8a7050',btn:'#5c4a1e',btnTxt:'#f5f0e8',bar:'#8a7050',border:'#d4c5a0',font:"Georgia,serif"},
+];
+
+const BTN_STYLES=[
+  {
+    id:'classic',name:'クラシック',
+    prev:(T)=>`<div style="display:flex;flex-direction:column;gap:3px;width:100%"><div style="display:flex;align-items:center;gap:4px;font-size:10px;color:${T.text}"><input type="radio" disabled> 選択肢A</div><div style="display:flex;align-items:center;gap:4px;font-size:10px;color:${T.text}"><input type="radio" disabled> 選択肢B</div></div>`,
+    radio:(opts,T,qi)=>opts.map(o=>`<label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:14px;color:${T.text};cursor:pointer"><input type="radio" name="q${qi}" value="${escQ(o)}" style="accent-color:${T.accent}"> ${o}</label>`).join(''),
+    check:(opts,T,qi)=>opts.map(o=>`<label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:14px;color:${T.text};cursor:pointer"><input type="checkbox" name="q${qi}" value="${escQ(o)}" style="accent-color:${T.accent}"> ${o}</label>`).join(''),
+    js:''
+  },
+  {
+    id:'pill',name:'ピル型',
+    prev:(T)=>`<div style="display:flex;gap:4px;flex-wrap:wrap"><span style="font-size:10px;padding:2px 8px;border-radius:999px;border:1px solid ${T.accent};color:${T.accent};background:${T.card}">A</span><span style="font-size:10px;padding:2px 8px;border-radius:999px;background:${T.btn};color:${T.btnTxt}">B</span></div>`,
+    radio:(opts,T,qi)=>`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px">${opts.map((o,i)=>`<label style="cursor:pointer"><input type="radio" name="q${qi}" value="${escQ(o)}" style="display:none" onchange="pillSel(this,'pr${qi}','${T.btn}','${T.btnTxt}','${T.card}','${T.accent}')"><span id="pr${qi}-${i}" style="display:inline-block;padding:7px 15px;border-radius:999px;border:1.5px solid ${T.accent};color:${T.accent};background:${T.card};font-size:14px;transition:.15s;user-select:none">${o}</span></label>`).join('')}</div>`,
+    check:(opts,T,qi)=>`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px">${opts.map((o,i)=>`<label style="cursor:pointer"><input type="checkbox" name="q${qi}" value="${escQ(o)}" style="display:none" onchange="pillChk(this,'pc${qi}-${i}','${T.btn}','${T.btnTxt}','${T.card}','${T.accent}','${T.border}')"><span id="pc${qi}-${i}" style="display:inline-block;padding:7px 15px;border-radius:999px;border:1.5px solid ${T.border};color:${T.sub};background:${T.card};font-size:14px;transition:.15s;user-select:none">${o}</span></label>`).join('')}</div>`,
+    js:`function pillSel(inp,grp,btnC,btnT,cardC,accC){document.querySelectorAll('[id^="'+grp+'"]').forEach(s=>{s.style.background=cardC;s.style.color=accC;s.style.borderColor=accC});var sp=inp.nextElementSibling;sp.style.background=btnC;sp.style.color=btnT;sp.style.borderColor=btnC}
+function pillChk(inp,id,btnC,btnT,cardC,accC,borderC){var sp=document.getElementById(id);if(inp.checked){sp.style.background=btnC;sp.style.color=btnT;sp.style.borderColor=btnC}else{sp.style.background=cardC;sp.style.color=accC;sp.style.borderColor=borderC}}`
+  },
+  {
+    id:'block',name:'ブロック型',
+    prev:(T)=>`<div style="display:flex;flex-direction:column;gap:3px;width:100%"><div style="font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid ${T.border};color:${T.text};background:${T.card}">選択肢A</div><div style="font-size:10px;padding:3px 8px;border-radius:5px;background:${T.btn};color:${T.btnTxt}">選択肢B</div></div>`,
+    radio:(opts,T,qi)=>`<div style="display:flex;flex-direction:column;gap:7px;margin-bottom:4px">${opts.map((o,i)=>`<label style="cursor:pointer"><input type="radio" name="q${qi}" value="${escQ(o)}" style="display:none" onchange="blockSel(this,'br${qi}','${T.btn}','${T.btnTxt}','${T.card}','${T.text}','${T.border}')"><span id="br${qi}-${i}" style="display:block;padding:11px 14px;border-radius:9px;border:1.5px solid ${T.border};color:${T.text};background:${T.card};font-size:14px;transition:.15s;user-select:none">${o}</span></label>`).join('')}</div>`,
+    check:(opts,T,qi)=>`<div style="display:flex;flex-direction:column;gap:7px;margin-bottom:4px">${opts.map((o,i)=>`<label style="cursor:pointer"><input type="checkbox" name="q${qi}" value="${escQ(o)}" style="display:none" onchange="blockChk(this,'bc${qi}-${i}','${T.btn}','${T.btnTxt}','${T.card}','${T.text}','${T.border}')"><span id="bc${qi}-${i}" style="display:block;padding:11px 14px;border-radius:9px;border:1.5px solid ${T.border};color:${T.text};background:${T.card};font-size:14px;transition:.15s;user-select:none">${o}</span></label>`).join('')}</div>`,
+    js:`function blockSel(inp,grp,btnC,btnT,cardC,txtC,borderC){document.querySelectorAll('[id^="'+grp+'"]').forEach(s=>{s.style.background=cardC;s.style.color=txtC;s.style.borderColor=borderC});var sp=inp.nextElementSibling;sp.style.background=btnC;sp.style.color=btnT;sp.style.borderColor=btnC}
+function blockChk(inp,id,btnC,btnT,cardC,txtC,borderC){var sp=document.getElementById(id);if(inp.checked){sp.style.background=btnC;sp.style.color=btnT;sp.style.borderColor=btnC}else{sp.style.background=cardC;sp.style.color=txtC;sp.style.borderColor=borderC}}`
+  },
+  {
+    id:'card',name:'カード型',
+    prev:(T)=>`<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;width:100%"><div style="font-size:10px;padding:4px 6px;border-radius:5px;border:1px solid ${T.border};color:${T.text};background:${T.card};text-align:center">◆ A</div><div style="font-size:10px;padding:4px 6px;border-radius:5px;background:${T.btn};color:${T.btnTxt};text-align:center">★ B</div></div>`,
+    radio:(opts,T,qi)=>`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:9px;margin-bottom:4px">${opts.map((o,i)=>`<label style="cursor:pointer"><input type="radio" name="q${qi}" value="${escQ(o)}" style="display:none" onchange="blockSel(this,'cr${qi}','${T.btn}','${T.btnTxt}','${T.card}','${T.text}','${T.border}')"><span id="cr${qi}-${i}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:68px;padding:10px 8px;border-radius:10px;border:1.5px solid ${T.border};color:${T.text};background:${T.card};font-size:13px;text-align:center;transition:.15s;user-select:none;gap:5px"><span style="font-size:20px">${['◆','◇','○','●','★','☆','▲','△'][i%8]}</span>${o}</span></label>`).join('')}</div>`,
+    check:(opts,T,qi)=>`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:9px;margin-bottom:4px">${opts.map((o,i)=>`<label style="cursor:pointer"><input type="checkbox" name="q${qi}" value="${escQ(o)}" style="display:none" onchange="blockChk(this,'cc${qi}-${i}','${T.btn}','${T.btnTxt}','${T.card}','${T.text}','${T.border}')"><span id="cc${qi}-${i}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:68px;padding:10px 8px;border-radius:10px;border:1.5px solid ${T.border};color:${T.text};background:${T.card};font-size:13px;text-align:center;transition:.15s;user-select:none;gap:5px"><span style="font-size:20px">${['◆','◇','○','●','★','☆','▲','△'][i%8]}</span>${o}</span></label>`).join('')}</div>`,
+    js:`function blockSel(inp,grp,btnC,btnT,cardC,txtC,borderC){document.querySelectorAll('[id^="'+grp+'"]').forEach(s=>{s.style.background=cardC;s.style.color=txtC;s.style.borderColor=borderC});var sp=inp.nextElementSibling;sp.style.background=btnC;sp.style.color=btnT;sp.style.borderColor=btnC}
+function blockChk(inp,id,btnC,btnT,cardC,txtC,borderC){var sp=document.getElementById(id);if(inp.checked){sp.style.background=btnC;sp.style.color=btnT;sp.style.borderColor=btnC}else{sp.style.background=cardC;sp.style.color=txtC;sp.style.borderColor=borderC}}`
+  },
+  {
+    id:'toggle',name:'トグル型',
+    prev:(T)=>`<div style="display:inline-flex;border:1px solid ${T.border};border-radius:999px;overflow:hidden;font-size:10px"><span style="padding:3px 8px;background:${T.btn};color:${T.btnTxt}">A</span><span style="padding:3px 8px;color:${T.sub}">B</span><span style="padding:3px 8px;color:${T.sub}">C</span></div>`,
+    radio:(opts,T,qi)=>`<div style="display:inline-flex;border:1.5px solid ${T.border};border-radius:999px;overflow:hidden;margin-bottom:8px;flex-wrap:wrap">${opts.map((o,i)=>`<label style="cursor:pointer"><input type="radio" name="q${qi}" value="${escQ(o)}" style="display:none" onchange="toggleSel(this,'tg${qi}','${T.btn}','${T.btnTxt}','${T.sub}')"><span id="tg${qi}-${i}" style="display:inline-block;padding:9px 18px;font-size:14px;color:${T.sub};background:transparent;transition:.15s;user-select:none;white-space:nowrap">${o}</span></label>`).join('')}</div>`,
+    check:(opts,T,qi)=>`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">${opts.map((o,i)=>`<label style="cursor:pointer"><input type="checkbox" name="q${qi}" value="${escQ(o)}" style="display:none" onchange="pillChk(this,'tc${qi}-${i}','${T.btn}','${T.btnTxt}','${T.card}','${T.accent}','${T.border}')"><span id="tc${qi}-${i}" style="display:inline-block;padding:9px 18px;border-radius:999px;border:1.5px solid ${T.border};color:${T.sub};background:${T.card};font-size:14px;transition:.15s;user-select:none">${o}</span></label>`).join('')}</div>`,
+    js:`function toggleSel(inp,grp,btnC,btnT,subC){document.querySelectorAll('[id^="'+grp+'"]').forEach(s=>{s.style.background='transparent';s.style.color=subC});var sp=inp.nextElementSibling;sp.style.background=btnC;sp.style.color=btnT}
+function pillChk(inp,id,btnC,btnT,cardC,accC,borderC){var sp=document.getElementById(id);if(inp.checked){sp.style.background=btnC;sp.style.color=btnT;sp.style.borderColor=btnC}else{sp.style.background=cardC;sp.style.color=accC;sp.style.borderColor=borderC}}`
+  },
+  {
+    id:'outline',name:'アウトライン',
+    prev:(T)=>`<div style="display:flex;flex-direction:column;gap:3px;width:100%"><div style="font-size:10px;padding:3px 8px;border-radius:5px;border:1.5px solid ${T.border};color:${T.sub}">選択肢A</div><div style="font-size:10px;padding:3px 8px;border-radius:5px;border:2px solid ${T.accent};color:${T.accent};font-weight:600">選択肢B</div></div>`,
+    radio:(opts,T,qi)=>`<div style="display:flex;flex-direction:column;gap:7px;margin-bottom:4px">${opts.map((o,i)=>`<label style="cursor:pointer"><input type="radio" name="q${qi}" value="${escQ(o)}" style="display:none" onchange="outlineSel(this,'or${qi}','${T.accent}','${T.sub}','${T.border}')"><span id="or${qi}-${i}" style="display:block;padding:11px 14px;border-radius:9px;border:1.5px solid ${T.border};color:${T.sub};background:transparent;font-size:14px;transition:.15s;user-select:none">${o}</span></label>`).join('')}</div>`,
+    check:(opts,T,qi)=>`<div style="display:flex;flex-direction:column;gap:7px;margin-bottom:4px">${opts.map((o,i)=>`<label style="cursor:pointer"><input type="checkbox" name="q${qi}" value="${escQ(o)}" style="display:none" onchange="outlineChk(this,'oc${qi}-${i}','${T.accent}','${T.sub}','${T.border}')"><span id="oc${qi}-${i}" style="display:block;padding:11px 14px;border-radius:9px;border:1.5px solid ${T.border};color:${T.sub};background:transparent;font-size:14px;transition:.15s;user-select:none">${o}</span></label>`).join('')}</div>`,
+    js:`function outlineSel(inp,grp,accC,subC,borderC){document.querySelectorAll('[id^="'+grp+'"]').forEach(s=>{s.style.borderColor=borderC;s.style.color=subC;s.style.fontWeight='400'});var sp=inp.nextElementSibling;sp.style.borderColor=accC;sp.style.color=accC;sp.style.fontWeight='600'}
+function outlineChk(inp,id,accC,subC,borderC){var sp=document.getElementById(id);if(inp.checked){sp.style.borderColor=accC;sp.style.color=accC;sp.style.fontWeight='600'}else{sp.style.borderColor=borderC;sp.style.color=subC;sp.style.fontWeight='400'}}`
+  },
+];
+
+function escQ(s){return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+let questions=[
+  {id:1,text:'このブログの内容はいかがでしたか？',type:'radio',options:['とても良かった','良かった','普通','改善してほしい'],required:true,minSel:0,freeLabel:'',placeholder:'',freePlaceholder:''},
+  {id:2,text:'興味のあるトピックを選んでください（2つ以上）',type:'checkbox',options:['デッキ解説','大会レポート','カード考察','その他'],required:false,minSel:2,freeLabel:'',placeholder:'',freePlaceholder:''},
+  {id:3,text:'ご意見・ご感想をお聞かせください',type:'text',options:[],required:false,minSel:0,freeLabel:'',placeholder:'自由にご記入ください',freePlaceholder:''},
+  {id:4,text:'好きなカードを教えてください（選択+自由記述）',type:'freeplus',options:['モンスターカード','魔法カード','罠カード'],required:false,minSel:1,freeLabel:'その他のカードや理由など',placeholder:'',freePlaceholder:''},
+];
+let nid=5,editId=null,curTab='preview',curCode='html',selTheme='clean',selBS='classic';
+
+function getT(){return THEMES.find(t=>t.id===selTheme);}
+function getBS(){return BTN_STYLES.find(s=>s.id===selBS);}
+
+function buildThemeGrid(){
+  document.getElementById('themeGrid').innerHTML=THEMES.map(t=>{
+    const dots=[t.bg,t.btn,t.bar].map(c=>`<div class="dot" style="background:${c};border:1px solid rgba(0,0,0,.1)"></div>`).join('');
+    return `<div class="scard${t.id===selTheme?' sel':''}" onclick="selThm('${t.id}')" style="background:${t.card}"><div class="scard-prev" style="background:${t.bg}">${dots}</div><div class="scard-name">${t.name}</div></div>`;
+  }).join('');
+}
+function buildBSGrid(){
+  const T=getT();
+  document.getElementById('btnStyleGrid').innerHTML=BTN_STYLES.map(s=>`<div class="scard${s.id===selBS?' sel':''}" onclick="selBSt('${s.id}')" style="background:${T.card}"><div class="scard-prev">${s.prev(T)}</div><div class="scard-name">${s.name}</div></div>`).join('');
+}
+function selThm(id){selTheme=id;buildThemeGrid();buildBSGrid();rp();}
+function selBSt(id){selBS=id;buildBSGrid();rp();}
+
+function rql(){
+  const typeMap={radio:'<span class="badge b-r">単一選択</span>',checkbox:'<span class="badge b-c">複数選択</span>',text:'<span class="badge b-t">自由記述</span>',freeplus:'<span class="badge b-f">自由+選択肢</span>'};
+  document.getElementById('qList').innerHTML=questions.map((q,i)=>{
+    const extra=[];
+    if(q.minSel>0)extra.push(`最低${q.minSel}個`);
+    if(q.required)extra.push('必須');
+    const opts=[...q.options.slice(0,2),...extra].join('・')+(q.options.length>2?'…':'');
+    return `<div class="qcard${editId===q.id?' active':''}">
+      <div class="qh"><span class="qn">Q${i+1}</span><div class="qb">${typeMap[q.type]||''}<div style="font-size:13px;font-weight:500">${q.text||'（質問文なし）'}</div>${opts?`<div style="font-size:11px;color:#888;margin-top:2px">${opts}</div>`:''}</div></div>
+      <div class="qa">
+        <button class="btn" style="font-size:11px;padding:3px 8px" onclick="editQ(${q.id})">編集</button>
+        ${i>0?`<button class="btn" style="font-size:11px;padding:3px 8px" onclick="mvQ(${i},-1)">↑</button>`:''}
+        ${i<questions.length-1?`<button class="btn" style="font-size:11px;padding:3px 8px" onclick="mvQ(${i},1)">↓</button>`:''}
+        <button class="btn" style="font-size:11px;padding:3px 8px" onclick="copyQ(${q.id})">複製</button>
+        <button class="btn bd" style="font-size:11px;padding:3px 8px" onclick="delQ(${q.id})">削除</button>
+      </div></div>`;
+  }).join('');
+}
+
+function addQ(){
+  const q={id:nid++,text:'新しい質問',type:'radio',options:['選択肢1','選択肢2'],required:false,minSel:0,freeLabel:'',placeholder:'',freePlaceholder:''};
+  questions.push(q);rql();rp();editQ(q.id);
+}
+function editQ(id){
+  editId=id;const q=questions.find(x=>x.id===id);
+  document.getElementById('eText').value=q.text;
+  document.getElementById('eType').value=q.type;
+  document.getElementById('eReq').checked=q.required;
+  document.getElementById('eMinSel').value=q.minSel||0;
+  document.getElementById('eFreeLabel').value=q.freeLabel||'';
+  document.getElementById('ePlaceholder').value=q.placeholder||'';
+  document.getElementById('eFreePlaceholder').value=q.freePlaceholder||'';
+  document.getElementById('editBox').style.display='block';
+  rol(q);rql();uet();
+}
+function closeEdit(){editId=null;document.getElementById('editBox').style.display='none';rql();}
+function ue(){
+  if(!editId)return;
+  const q=questions.find(x=>x.id===editId);
+  q.text=document.getElementById('eText').value;
+  q.required=document.getElementById('eReq').checked;
+  q.minSel=Math.max(0,parseInt(document.getElementById('eMinSel').value)||0);
+  q.freeLabel=document.getElementById('eFreeLabel').value;
+  q.placeholder=document.getElementById('ePlaceholder').value;
+  q.freePlaceholder=document.getElementById('eFreePlaceholder').value;
+  const n=q.minSel||0;
+  const hint=document.getElementById('minSelHint');
+  if(hint)hint.textContent=n>0?`送信時に${n}個以上選択されていないとエラーになります`:'制限なし（0個以上）';
+  rp();rql();
+}
+function uet(){
+  if(!editId)return;
+  const q=questions.find(x=>x.id===editId);
+  q.type=document.getElementById('eType').value;
+  const hasOpts=q.type==='radio'||q.type==='checkbox'||q.type==='freeplus';
+  const hasMin=q.type==='checkbox'||q.type==='freeplus';
+  document.getElementById('optsEd').style.display=hasOpts?'':'none';
+  document.getElementById('minSelEd').style.display=hasMin?'':'none';
+  document.getElementById('freeLabelEd').style.display=q.type==='freeplus'?'':'none';
+  document.getElementById('freePlaceholderEd').style.display=q.type==='freeplus'?'':'none';
+  document.getElementById('placeholderEd').style.display=q.type==='text'?'':'none';
+  if(hasOpts&&q.options.length===0)q.options=['選択肢1','選択肢2'];
+  if(!hasMin)q.minSel=0;
+  rol(q);rp();rql();
+}
+function rol(q){
+  document.getElementById('optList').innerHTML=q.options.map((o,i)=>`<div class="or">
+    <button class="btn" style="font-size:11px;padding:3px 5px;flex-shrink:0" onclick="mvOpt(${i},-1)" ${i===0?'disabled':''} title="上へ">↑</button>
+    <button class="btn" style="font-size:11px;padding:3px 5px;flex-shrink:0" onclick="mvOpt(${i},1)" ${i===q.options.length-1?'disabled':''} title="下へ">↓</button>
+    <input type="text" value="${escQ(o)}" oninput="upOpt(${i},this.value)">
+    <button class="btn bd" style="font-size:11px;padding:3px 6px;flex-shrink:0" onclick="rmOpt(${i})">×</button>
+  </div>`).join('');
+}
+function mvOpt(i,d){
+  const q=questions.find(x=>x.id===editId);
+  const j=i+d;
+  if(j<0||j>=q.options.length)return;
+  [q.options[i],q.options[j]]=[q.options[j],q.options[i]];
+  rol(q);rp();
+}
+function upOpt(i,v){const q=questions.find(x=>x.id===editId);q.options[i]=v;rp();}
+function addOpt(){const q=questions.find(x=>x.id===editId);q.options.push('選択肢'+(q.options.length+1));rol(q);rp();}
+function rmOpt(i){const q=questions.find(x=>x.id===editId);q.options.splice(i,1);rol(q);rp();}
+function delQ(id){questions=questions.filter(x=>x.id!==id);if(editId===id)closeEdit();rql();rp();}
+function mvQ(i,d){const j=i+d;if(j<0||j>=questions.length)return;[questions[i],questions[j]]=[questions[j],questions[i]];rql();rp();}
+function copyQ(id){
+  const src=questions.find(x=>x.id===id);
+  if(!src)return;
+  const copy=JSON.parse(JSON.stringify(src));
+  copy.id=nid++;
+  copy.text=copy.text+' (コピー)';
+  const idx=questions.findIndex(x=>x.id===id);
+  questions.splice(idx+1,0,copy);
+  rql();rp();
+  // コピーした質問を自動で編集状態に
+  editQ(copy.id);
+}
+
+function renderQPrev(q,i,T,BS){
+  const minNote=q.minSel>0?`<span style="font-size:11px;color:${T.sub};margin-left:6px">${q.minSel}個以上</span>`:'';
+  const req=q.required?`<span style="color:${T.accent};font-size:11px;margin-left:4px">必須</span>`:'';
+  let h=`<div style="margin-bottom:18px"><div style="font-size:14px;font-weight:500;color:${T.text};margin-bottom:9px;font-family:${T.font}">Q${i+1}. ${q.text}${req}${minNote}</div>`;
+  if(q.type==='radio'){
+    h+=BS.radio(q.options,T,`p${i}`);
+  } else if(q.type==='checkbox'){
+    h+=BS.check(q.options,T,`p${i}`);
+  } else if(q.type==='text'){
+    const ph=q.placeholder||'自由にご記入ください';
+    h+=`<textarea disabled placeholder="${ph}" style="width:100%;font-size:13px;padding:8px 10px;border:1px solid ${T.border};border-radius:7px;background:${T.bg};color:${T.sub};resize:none;min-height:60px;font-family:${T.font}"></textarea>`;
+  } else if(q.type==='freeplus'){
+    h+=BS.check(q.options,T,`p${i}`);
+    const fl=q.freeLabel||'その他・自由記述';
+    const fph=q.freePlaceholder||'自由にご記入ください';
+    h+=`<div style="margin-top:10px"><div style="font-size:12px;color:${T.sub};margin-bottom:5px;font-family:${T.font}">${fl}</div><textarea disabled placeholder="${fph}" style="width:100%;font-size:13px;padding:8px 10px;border:1px solid ${T.border};border-radius:7px;background:${T.bg};color:${T.sub};resize:none;min-height:52px;font-family:${T.font}"></textarea></div>`;
+  }
+  return h+`</div>`;
+}
+
+function rp(){
+  const T=getT(),BS=getBS();
+  const title=document.getElementById('sTitle').value||'アンケート';
+  const desc=document.getElementById('sDesc').value;
+  const showR=document.getElementById('showRes').checked;
+  const showCount=document.getElementById('showCount').checked;
+  const countTiming=document.getElementById('countTiming').value;
+  const successMsg=document.getElementById('successMsg').value||'回答ありがとうございました！';
+  const successSubMsg=document.getElementById('successSubMsg').value;
+  document.getElementById('showCountOpts').style.display=showCount?'':'none';
+  const pf=document.getElementById('prevContent');
+  pf.style.background=T.bg;pf.style.border=`1px solid ${T.border}`;
+  let h=`<div style="background:${T.card};border-radius:10px;padding:18px;border:1px solid ${T.border}">`;
+  if(showCount&&(countTiming==='before'||countTiming==='both')){
+    h+=`<div style="display:inline-flex;align-items:center;gap:6px;background:${T.accent}18;border:1px solid ${T.accent}44;border-radius:999px;padding:5px 14px;margin-bottom:12px;font-size:13px;color:${T.accent};font-family:${T.font}">12人が回答済み</div>`;
+  }
+  h+=`<div style="font-size:18px;font-weight:600;color:${T.text};margin-bottom:4px;font-family:${T.font}">${title}</div>`;
+  if(desc)h+=`<div style="font-size:13px;color:${T.sub};margin-bottom:14px;font-family:${T.font}">${desc}</div>`;
+  questions.forEach((q,i)=>{h+=renderQPrev(q,i,T,BS);});
+  h+=`<button style="padding:10px 24px;font-size:14px;font-weight:500;border:none;border-radius:8px;background:${T.btn};color:${T.btnTxt};font-family:${T.font};pointer-events:none">送信する</button>`;
+  if(showR)h+=`<div style="margin-top:8px;font-size:12px;color:${T.sub};font-family:${T.font}">送信後に集計結果が表示されます</div>`;
+  const countAfterHtml=(showCount&&(countTiming==='after'||countTiming==='both'))
+    ?`<div style="margin-top:8px;font-size:12px;color:${T.sub};font-family:${T.font}">あなたを含む <strong style="color:${T.accent}">13人</strong> が回答しました</div>`:'';
+  h+=`<div style="margin-top:14px;padding-top:12px;border-top:1px dashed ${T.border}">
+    <div style="font-size:11px;color:${T.sub};margin-bottom:6px;font-family:${T.font}">送信完了時の表示プレビュー</div>
+    <div style="padding:12px 14px;border-radius:9px;background:${T.btn}18;border:1px solid ${T.btn}44">
+      <div style="font-size:14px;font-weight:500;color:${T.btn};font-family:${T.font}">${successMsg}</div>
+      ${successSubMsg?`<div style="font-size:13px;color:${T.sub};margin-top:5px;line-height:1.6;font-family:${T.font}">${successSubMsg}</div>`:''}
+      ${countAfterHtml}
+    </div>
+  </div>`;
+  pf.innerHTML=h+`</div>`;
+  if(curTab==='export')gc();
+}
+
+function showTab(t){
+  curTab=t;
+  document.getElementById('prevPane').style.display=t==='preview'?'':'none';
+  document.getElementById('expPane').style.display=t==='export'?'':'none';
+  document.getElementById('t-prev').className='btn tab'+(t==='preview'?' on':'');
+  document.getElementById('t-exp').className='btn tab'+(t==='export'?' on':'');
+  if(t==='export')gc();
+}
+function sc(c){curCode=c;document.getElementById('ct-html').className='tab'+(c==='html'?' on':'');document.getElementById('ct-embed').className='tab'+(c==='embed'?' on':'');gc();}
+
+function gc(){
+  if(curCode==='embed'){
+    document.getElementById('codeBox').textContent=`<iframe src="https://YOUR_GITHUB_USERNAME.github.io/YOUR_REPO/survey.html" width="100%" height="700" frameborder="0" style="border:none;border-radius:10px"></iframe>`;
+    return;
+  }
+  if(questions.length===0){document.getElementById('codeBox').textContent='// 質問が1つもありません。質問を追加してからエクスポートしてください。';return;}
+  const T=getT(),BS=getBS();
+  const title=document.getElementById('sTitle').value||'アンケート';
+  const desc=document.getElementById('sDesc').value||'';
+  const apiKey=document.getElementById('apiKey').value||'YOUR_JSONBIN_API_KEY';
+  const binId=document.getElementById('binId').value||'';
+  const showR=document.getElementById('showRes').checked;
+  const dupeC=document.getElementById('dupeChk').checked;
+  const showCount=document.getElementById('showCount').checked;
+  const countTiming=document.getElementById('countTiming').value;
+  const successMsg=(document.getElementById('successMsg').value||'回答ありがとうございました！').replace(/`/g,"'").replace(/\$/g,'\\$');
+  const successSubMsg=(document.getElementById('successSubMsg').value||'').replace(/`/g,"'").replace(/\$/g,'\\$');
+  const qs=JSON.stringify(questions);
+  function extractBody(fn){const s=fn.toString();const start=s.indexOf('=>')+2;const body=s.slice(start).trim();return body.startsWith('{')?body.slice(1,body.lastIndexOf('}')).trim():('return '+body);}
+  const rr=extractBody(BS.radio);
+  const rc=extractBody(BS.check);
+
+  const code=`<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:${T.font};background:${T.bg};min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:30px 16px}
+.card{background:${T.card};border-radius:14px;padding:28px;max-width:600px;width:100%;border:1px solid ${T.border}}
+h1{font-size:22px;font-weight:600;color:${T.text};margin-bottom:6px}
+.desc{font-size:14px;color:${T.sub};margin-bottom:22px}
+.q{margin-bottom:24px}
+.ql{font-size:15px;font-weight:500;color:${T.text};margin-bottom:10px}
+.req{color:${T.accent};font-size:11px;margin-left:4px}
+.minnote{font-size:11px;color:${T.sub};margin-left:6px}
+.freelabel{font-size:13px;color:${T.sub};margin-bottom:6px;margin-top:12px}
+textarea{width:100%;padding:10px;border:1px solid ${T.border};border-radius:8px;font-size:14px;resize:vertical;min-height:80px;font-family:${T.font};background:${T.bg};color:${T.text}}
+.sbtn{padding:12px 28px;font-size:15px;font-weight:500;border:none;border-radius:9px;background:${T.btn};color:${T.btnTxt};cursor:pointer;font-family:${T.font}}
+.sbtn:disabled{opacity:.5;cursor:not-allowed}
+.countbadge{display:inline-flex;align-items:center;gap:6px;background:${T.accent}18;border:1px solid ${T.accent}44;border-radius:999px;padding:5px 14px;margin-bottom:14px;font-size:13px;color:${T.accent};font-family:${T.font}}
+.ok-box{padding:14px 16px;border-radius:10px;background:${T.btn}22;border:1px solid ${T.btn}44;margin-top:14px}
+.ok-title{font-size:15px;font-weight:500;color:${T.btn};font-family:${T.font}}
+.ok-sub{font-size:13px;color:${T.sub};margin-top:6px;font-family:${T.font};line-height:1.6}
+.ok-count{font-size:13px;color:${T.sub};margin-top:8px;font-family:${T.font}}
+.ok-count strong{color:${T.accent}}
+.err-box{padding:11px 15px;border-radius:9px;font-size:14px;margin-top:14px;background:#fcebeb;color:#791f1f}
+.res{margin-top:26px;border-top:1px solid ${T.border};padding-top:20px}
+.rq{margin-bottom:20px}
+.rl{font-size:14px;font-weight:500;color:${T.text};margin-bottom:8px}
+.br{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:13px;color:${T.text}}
+.bw{flex:1;background:${T.border};border-radius:999px;height:10px;overflow:hidden}
+.bv{height:10px;background:${T.bar};border-radius:999px;transition:width .5s}
+.bp{min-width:38px;text-align:right;font-size:12px;color:${T.sub}}.bc{min-width:36px;text-align:right;font-size:12px;color:${T.sub};opacity:.7}
+.tot{font-size:12px;color:${T.sub};margin-top:5px}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>${title}</h1>
+${desc?`<div class="desc">${desc}</div>`:''}
+${showCount&&(countTiming==='before'||countTiming==='both')?'<div class="countbadge" id="countBadge" style="display:none"></div>':''}
+<div id="form"></div>
+<button class="sbtn" id="sb" onclick="submit()">送信する</button>
+<div id="msgArea"></div>
+${showR?'<div class="res" id="res" style="display:none"></div>':''}
+</div>
+<script>
+const QS=${qs};
+const AK='${apiKey}';
+let bid='${binId}';
+const SHOW_R=${showR};
+const DUPE=${dupeC};
+const SHOW_COUNT=${showCount};
+const COUNT_TIMING='${countTiming}';
+const SUCCESS_MSG='${successMsg}';
+const SUCCESS_SUB='${successSubMsg}';
+const T={bg:'${T.bg}',card:'${T.card}',accent:'${T.accent}',text:'${T.text}',sub:'${T.sub}',btn:'${T.btn}',btnTxt:'${T.btnTxt}',border:'${T.border}'};
+${BS.js}
+function renderRadio(opts,T,qi){${rr}}
+function renderCheck(opts,T,qi){${rc}}
+function buildForm(){
+  document.getElementById('form').innerHTML=QS.map((q,i)=>{
+    const req=q.required?'<span class="req">必須</span>':'';
+    const minNote=q.minSel>0?\`<span class="minnote">\${q.minSel}個以上選択</span>\`:'';
+    let inp='';
+    if(q.type==='radio'){
+      inp=renderRadio(q.options,T,i);
+    } else if(q.type==='checkbox'){
+      inp=renderCheck(q.options,T,i);
+    } else if(q.type==='text'){
+      const ph=q.placeholder||'自由にご記入ください';
+      inp=\`<textarea name="q\${i}" placeholder="\${ph}"></textarea>\`;
+    } else if(q.type==='freeplus'){
+      inp=renderCheck(q.options,T,i);
+      const fl=q.freeLabel||'その他・自由記述';
+      const fph=q.freePlaceholder||'自由にご記入ください';
+      inp+=\`<div class="freelabel">\${fl}</div><textarea name="qfree\${i}" placeholder="\${fph}" style="min-height:72px"></textarea>\`;
+    }
+    return \`<div class="q"><div class="ql">Q\${i+1}. \${q.text}\${req}\${minNote}</div>\${inp}</div>\`;
+  }).join('');
+}
+async function getData(){
+  if(!bid)return null;
+  try{const r=await fetch(\`https://api.jsonbin.io/v3/b/\${bid}/latest\`,{headers:{'X-Master-Key':AK}});if(!r.ok)return null;const d=await r.json();return d.record;}catch{return null;}
+}
+function updateCountBadge(n){
+  const el=document.getElementById('countBadge');
+  if(!el)return;
+  el.textContent=n+'人が回答済み';
+  el.style.display='inline-flex';
+}
+async function init(){
+  if(!AK||AK==='YOUR_JSONBIN_API_KEY')return;
+  if(SHOW_COUNT&&(COUNT_TIMING==='before'||COUNT_TIMING==='both')){
+    const data=await getData();
+    if(data&&data.responses)updateCountBadge(data.responses.length);
+  }
+}
+async function submit(){
+  if(DUPE&&localStorage.getItem('sv_done')){showErr('すでに回答済みです。');return;}
+  const btn=document.getElementById('sb');btn.disabled=true;
+  const ans={};const errs=[];
+  for(let i=0;i<QS.length;i++){
+    const q=QS[i];
+    if(q.type==='radio'){
+      const e=document.querySelector(\`[name=q\${i}]:checked\`);
+      ans[i]=e?e.value:'';
+      if(q.required&&!ans[i])errs.push(\`Q\${i+1}: 選択してください。\`);
+    } else if(q.type==='checkbox'){
+      ans[i]=[...document.querySelectorAll(\`[name=q\${i}]:checked\`)].map(e=>e.value);
+      if(q.required&&!ans[i].length)errs.push(\`Q\${i+1}: 選択してください。\`);
+      else if(q.minSel>0&&ans[i].length<q.minSel)errs.push(\`Q\${i+1}: \${q.minSel}個以上選択してください。\`);
+    } else if(q.type==='text'){
+      const el=document.querySelector(\`[name=q\${i}]\`);
+      ans[i]=el?el.value:'';
+      if(q.required&&!ans[i].trim())errs.push(\`Q\${i+1}: 入力してください。\`);
+    } else if(q.type==='freeplus'){
+      ans[i]=[...document.querySelectorAll(\`[name=q\${i}]:checked\`)].map(e=>e.value);
+      const fEl=document.querySelector(\`[name=qfree\${i}]\`);
+      ans['free'+i]=fEl?fEl.value:'';
+      if(q.minSel>0&&ans[i].length<q.minSel)errs.push(\`Q\${i+1}: \${q.minSel}個以上選択してください。\`);
+      else if(q.required&&!ans[i].length&&!ans['free'+i].trim())errs.push(\`Q\${i+1}: 回答してください。\`);
+    }
+  }
+  if(errs.length){showErr(errs.join('<br>'));btn.disabled=false;return;}
+  try{
+    let data=await getData()||{responses:[],questions:QS};
+    data.responses.push({ts:Date.now(),answers:ans});
+    data.questions=QS;
+    if(!bid){
+      const r=await fetch('https://api.jsonbin.io/v3/b',{method:'POST',headers:{'Content-Type':'application/json','X-Master-Key':AK,'X-Bin-Private':'false'},body:JSON.stringify(data)});
+      const d=await r.json();bid=d.metadata.id;
+    } else {
+      await fetch(\`https://api.jsonbin.io/v3/b/\${bid}\`,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':AK},body:JSON.stringify(data)});
+    }
+    if(DUPE)localStorage.setItem('sv_done','1');
+    btn.style.display='none';
+    showSuccess(data.responses.length);
+    if(SHOW_R)renderRes(data.responses);
+  } catch(e){showErr('送信に失敗しました。時間をおいて再試行してください。');btn.disabled=false;}
+}
+function showErr(t){const el=document.getElementById('msgArea');el.innerHTML='<div class="err-box" style="line-height:1.7">'+t+'</div>';}
+function showSuccess(total){
+  const el=document.getElementById('msgArea');
+  const countHtml=(SHOW_COUNT&&(COUNT_TIMING==='after'||COUNT_TIMING==='both'))
+    ?'<div class="ok-count">あなたを含む <strong>'+total+'人</strong> が回答しました</div>':'';
+  el.innerHTML='<div class="ok-box"><div class="ok-title">'+SUCCESS_MSG+'</div>'+(SUCCESS_SUB?'<div class="ok-sub">'+SUCCESS_SUB+'</div>':'')+countHtml+'</div>';
+}
+function renderRes(responses){
+  const el=document.getElementById('res');if(!el)return;el.style.display='';
+  const tot=responses.length;
+  el.innerHTML='<div style="font-weight:600;margin-bottom:14px;color:${T.text}">集計結果（'+tot+'件）</div>'+
+  QS.map((q,i)=>{
+    if(q.type==='text')return '<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:500;color:${T.text};margin-bottom:6px">'+q.text+'</div><div style="font-size:12px;color:${T.sub}">自由記述（集計対象外）</div></div>';
+    const opts=[...q.options,...(q.type==='freeplus'?['自由記述あり']:[])];
+    const cnt={};opts.forEach(o=>cnt[o]=0);
+    responses.forEach(r=>{
+      const a=r.answers[i];
+      if(Array.isArray(a))a.forEach(v=>{if(cnt[v]!==undefined)cnt[v]++;});
+      else if(a&&cnt[a]!==undefined)cnt[a]++;
+      if(q.type==='freeplus'&&r.answers['free'+i]&&r.answers['free'+i].trim())cnt['自由記述あり']++;
+    });
+    const bars=opts.map(o=>{const c=cnt[o];const p=tot?Math.round(c/tot*100):0;return \`<div class="br"><span style="min-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">\${o}</span><div class="bw"><div class="bv" style="width:\${p}%"></div></div><span class="bp">\${p}%</span><span class="bc">\${c}件</span></div>\`;}).join('');
+    return \`<div class="rq"><div class="rl">\${q.text}</div>\${bars}<div class="tot">合計 \${tot}件</div></div>\`;
+  }).join('');
+}
+buildForm();
+init();
+<\/script>
+
+<!-- ヘルプモーダル -->
+<div class="modal-overlay" id="helpModal" onclick="if(event.target===this)closeHelp()">
+<div class="modal">
+  <button class="modal-close" onclick="closeHelp()">&#x2715;</button>
+  <h2>アンケートビルダー 使い方ガイド</h2>
+  <p class="modal-lead">アンケートを作成してJSONBin.ioに回答データを保存し、はてなブログにiframeで埋め込むまでの手順を説明します。</p>
+
+  <div class="sep"></div>
+  <h3>Step 1 &#x2014; JSONBin.ioの準備（無料）</h3>
+  <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">アカウント作成</div><div class="step-desc"><a href="https://jsonbin.io" target="_blank">jsonbin.io</a> にアクセスして無料アカウントを作成します。メールアドレスとパスワードだけで登録できます。</div></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">APIキーの取得</div><div class="step-desc">ログイン後、ダッシュボード右上のアイコンから「API Keys」を開き、「+ CREATE ACCESS KEY」でAPIキーを生成します。表示された <code style="background:#f4f4f2;padding:1px 5px;border-radius:4px;font-size:11px">$2a$10$...</code> から始まる文字列をコピーします。</div></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">ビルダーにAPIキーを入力</div><div class="step-desc">左パネルの「JSONBin APIキー」欄にペーストします。Bin IDは空欄のままにしておくと、最初の回答時に自動で作成されます。</div></div></div>
+  <div class="note">Bin IDを手動で指定することもできます。JSONBinのダッシュボードでBinを先に作成して、そのIDを入力してください。</div>
+
+  <div class="sep"></div>
+  <h3>Step 2 &#x2014; アンケートの設定</h3>
+  <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">基本情報を入力</div><div class="step-desc">「タイトル」と「説明文」を入力します。タイトルはアンケートページのページタイトルにもなります。</div></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">表示オプションを設定</div><div class="step-desc">
+    <ul>
+      <li><b>回答後に集計結果を表示</b>：ON にすると送信後に棒グラフ形式の集計が表示されます</li>
+      <li><b>重複回答チェック</b>：ON にすると同じブラウザからの2回目以降の送信をブロックします（localStorageを使用）</li>
+      <li><b>回答者数を表示する</b>：ON にすると現在の回答件数を表示します。表示タイミングを「常時」「送信後のみ」「両方」から選べます</li>
+    </ul>
+  </div></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">完了メッセージを設定</div><div class="step-desc">送信後に表示されるメッセージとサブメッセージを自由に入力できます。プレビューパネルの下部にリアルタイムで表示を確認できます。</div></div></div>
+
+  <div class="sep"></div>
+  <h3>Step 3 &#x2014; デザインの選択</h3>
+  <p>「デザインテーマ」から9種類のカラーテーマを選びます。テーマはブログのデザインに合わせて選んでください。</p>
+  <ul>
+    <li><b>クリーン</b>：白ベースのシンプルなデザイン</li>
+    <li><b>ミッドナイト</b>：ダークテーマ（赤アクセント）</li>
+    <li><b>フォレスト</b>・<b>さくら</b>・<b>オーシャン</b>・<b>アンバー</b>：各カラーの明るい系</li>
+    <li><b>ミニマル</b>：モノクロ・余白重視</li>
+    <li><b>ラベンダー</b>：紫系パステル</li>
+    <li><b>ペーパー</b>：クラフト紙風</li>
+  </ul>
+  <p style="margin-top:8px">「選択肢のスタイル」から6種類の入力UIを選びます。</p>
+  <ul>
+    <li><b>クラシック</b>：標準のラジオボタン・チェックボックス</li>
+    <li><b>ピル型</b>：タグのようにクリックして選択</li>
+    <li><b>ブロック型</b>：ボタンと選択肢が一体化した横幅フル</li>
+    <li><b>カード型</b>：アイコン付きのグリッドカード</li>
+    <li><b>トグル型</b>：横並びのセグメント切り替え（単一選択向き）</li>
+    <li><b>アウトライン型</b>：枠線のみ・選択時に強調</li>
+  </ul>
+
+  <div class="sep"></div>
+  <h3>Step 4 &#x2014; 質問の追加と編集</h3>
+  <p>「＋ 質問を追加する」ボタンまたは右上の「+ 質問追加」ボタンで質問を追加します。追加後、自動的に編集パネルが開きます。</p>
+  <p style="margin-top:8px"><b>質問タイプ</b></p>
+  <ul>
+    <li><span class="badge-demo" style="background:#E6F1FB;color:#0C447C">単一選択</span>：選択肢から1つだけ選ぶ（ラジオボタン）</li>
+    <li><span class="badge-demo" style="background:#E1F5EE;color:#085041">複数選択</span>：選択肢から複数選べる（チェックボックス）。「最低選択数」も設定可能</li>
+    <li><span class="badge-demo" style="background:#FAEEDA;color:#633806">自由記述</span>：テキストエリアのみ。プレースホルダー文言を設定できます</li>
+    <li><span class="badge-demo" style="background:#FBEAF0;color:#72243E">自由+選択肢</span>：選択肢＋自由記述テキストエリアの複合タイプ</li>
+  </ul>
+  <p style="margin-top:8px"><b>編集パネルの各設定</b></p>
+  <ul>
+    <li><b>選択肢</b>：テキストを直接編集できます。「×」で削除、「＋ 追加」で選択肢を増やします</li>
+    <li><b>最低選択数</b>：複数選択・自由+選択肢タイプで設定可。0 = 制限なし</li>
+    <li><b>必須</b>：ON にすると未回答での送信をブロックします</li>
+    <li><b>↑ / ↓</b>：質問の順序を変更できます</li>
+  </ul>
+  <div class="note">プレビューパネルはリアルタイムで更新されます。右パネルでフォームの見た目を確認しながら編集してください。</div>
+
+  <div class="sep"></div>
+  <h3>Step 5 &#x2014; エクスポートと公開</h3>
+  <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">HTMLをダウンロード</div><div class="step-desc">右パネルの「エクスポート」タブを開き、「HTMLダウンロード」をクリックします。ファイル名はアンケートのタイトルになります。</div></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">GitHub Pagesに公開</div><div class="step-desc">GitHubで新しいリポジトリを作成し、ダウンロードしたHTMLをアップロードします。リポジトリの Settings → Pages → Branch を <code style="background:#f4f4f2;padding:1px 5px;border-radius:4px;font-size:11px">main</code> に設定して公開します。公開URLは <code style="background:#f4f4f2;padding:1px 5px;border-radius:4px;font-size:11px">https://ユーザー名.github.io/リポジトリ名/ファイル名.html</code> になります。</div></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">はてなブログに埋め込む</div><div class="step-desc">「埋め込みコード」タブのiframeコードをコピーし、<code style="background:#f4f4f2;padding:1px 5px;border-radius:4px;font-size:11px">src=""</code> の値を実際の公開URLに書き換えてブログ記事のHTML編集欄に貼り付けます。</div></div></div>
+  <div class="note">はてなブログでiframeを使うには「はてなPro」プランが必要です。また、同一ドメインでない外部iframeはセキュリティポリシーにより表示されない場合があります。その場合はアンケートページへのリンクを直接貼ることで代替できます。</div>
+
+  <div class="sep"></div>
+  <h3>よくある質問</h3>
+  <ul>
+    <li><b>回答データはどこに保存されますか？</b><br>JSONBin.ioのBinに保存されます。無料プランでは最大10,000件まで保存可能です。</li>
+    <li style="margin-top:8px"><b>APIキーが流出しても大丈夫ですか？</b><br>JSONBinのAPIキーはHTMLソースに含まれるため、閲覧者がソースを見れば確認できます。書き込み専用キーを使うか、自前のバックエンド（GASなど）を挟むことを推奨します。</li>
+    <li style="margin-top:8px"><b>重複回答チェックは完璧ですか？</b><br>localStorageを使った簡易的なチェックのため、別のブラウザや別デバイスからの重複回答は防げません。本格的な制御にはログイン認証が必要です。</li>
+    <li style="margin-top:8px"><b>アンケートHTMLを修正したい</b><br>ダウンロードしたHTMLをテキストエディタで直接編集できます。</li>
+  </ul>
+</div>
+</div>
+
+</body>
+</html>`;
+  document.getElementById('codeBox').textContent=code;
+}
+
+function copyCode(btn){
+  navigator.clipboard.writeText(document.getElementById('codeBox').textContent).then(()=>{
+    const orig=btn.textContent;btn.textContent='コピーしました！';setTimeout(()=>btn.textContent=orig,1500);
+  }).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=document.getElementById('codeBox').textContent;
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    const orig=btn.textContent;btn.textContent='コピーしました！';setTimeout(()=>btn.textContent=orig,1500);
+  });
+}
+function dlHTML(){
+  if(curCode==='embed'){copyCode();return;}
+  const code=document.getElementById('codeBox').textContent;
+  const title=(document.getElementById('sTitle').value||'survey').replace(/\s/g,'_');
+  const a=document.createElement('a');a.href='data:text/html;charset=utf-8,'+encodeURIComponent(code);a.download=title+'.html';a.click();
+}
+
+buildThemeGrid();buildBSGrid();rql();rp();
+function openHelp(){document.getElementById('helpModal').classList.add('open');document.body.style.overflow='hidden';}
+function closeHelp(){document.getElementById('helpModal').classList.remove('open');document.body.style.overflow='';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeHelp();});
+</script>
+
+<!-- ヘルプモーダル -->
+<div class="modal-overlay" id="helpModal" onclick="if(event.target===this)closeHelp()">
+<div class="modal">
+  <button class="modal-close" onclick="closeHelp()">&#x2715;</button>
+  <h2>アンケートビルダー 使い方ガイド</h2>
+  <p class="modal-lead">アンケートを作成してJSONBin.ioに回答データを保存し、はてなブログにiframeで埋め込むまでの手順を説明します。</p>
+
+  <div class="sep"></div>
+  <h3>Step 1 &#x2014; JSONBin.ioの準備（無料）</h3>
+  <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">アカウント作成</div><div class="step-desc"><a href="https://jsonbin.io" target="_blank">jsonbin.io</a> にアクセスして無料アカウントを作成します。メールアドレスとパスワードだけで登録できます。</div></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">APIキーの取得</div><div class="step-desc">ログイン後、ダッシュボード右上のアイコンから「API Keys」を開き、「+ CREATE ACCESS KEY」でAPIキーを生成します。表示された <code style="background:#f4f4f2;padding:1px 5px;border-radius:4px;font-size:11px">$2a$10$...</code> から始まる文字列をコピーします。</div></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">ビルダーにAPIキーを入力</div><div class="step-desc">左パネルの「JSONBin APIキー」欄にペーストします。Bin IDは空欄のままにしておくと、最初の回答時に自動で作成されます。</div></div></div>
+  <div class="note">Bin IDを手動で指定することもできます。JSONBinのダッシュボードでBinを先に作成して、そのIDを入力してください。</div>
+
+  <div class="sep"></div>
+  <h3>Step 2 &#x2014; アンケートの設定</h3>
+  <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">基本情報を入力</div><div class="step-desc">「タイトル」と「説明文」を入力します。タイトルはアンケートページのページタイトルにもなります。</div></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">表示オプションを設定</div><div class="step-desc">
+    <ul>
+      <li><b>回答後に集計結果を表示</b>：ON にすると送信後に棒グラフ形式の集計が表示されます</li>
+      <li><b>重複回答チェック</b>：ON にすると同じブラウザからの2回目以降の送信をブロックします（localStorageを使用）</li>
+      <li><b>回答者数を表示する</b>：ON にすると現在の回答件数を表示します。表示タイミングを「常時」「送信後のみ」「両方」から選べます</li>
+    </ul>
+  </div></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">完了メッセージを設定</div><div class="step-desc">送信後に表示されるメッセージとサブメッセージを自由に入力できます。プレビューパネルの下部にリアルタイムで表示を確認できます。</div></div></div>
+
+  <div class="sep"></div>
+  <h3>Step 3 &#x2014; デザインの選択</h3>
+  <p>「デザインテーマ」から9種類のカラーテーマを選びます。テーマはブログのデザインに合わせて選んでください。</p>
+  <ul>
+    <li><b>クリーン</b>：白ベースのシンプルなデザイン</li>
+    <li><b>ミッドナイト</b>：ダークテーマ（赤アクセント）</li>
+    <li><b>フォレスト</b>・<b>さくら</b>・<b>オーシャン</b>・<b>アンバー</b>：各カラーの明るい系</li>
+    <li><b>ミニマル</b>：モノクロ・余白重視</li>
+    <li><b>ラベンダー</b>：紫系パステル</li>
+    <li><b>ペーパー</b>：クラフト紙風</li>
+  </ul>
+  <p style="margin-top:8px">「選択肢のスタイル」から6種類の入力UIを選びます。</p>
+  <ul>
+    <li><b>クラシック</b>：標準のラジオボタン・チェックボックス</li>
+    <li><b>ピル型</b>：タグのようにクリックして選択</li>
+    <li><b>ブロック型</b>：ボタンと選択肢が一体化した横幅フル</li>
+    <li><b>カード型</b>：アイコン付きのグリッドカード</li>
+    <li><b>トグル型</b>：横並びのセグメント切り替え（単一選択向き）</li>
+    <li><b>アウトライン型</b>：枠線のみ・選択時に強調</li>
+  </ul>
+
+  <div class="sep"></div>
+  <h3>Step 4 &#x2014; 質問の追加と編集</h3>
+  <p>「＋ 質問を追加する」ボタンまたは右上の「+ 質問追加」ボタンで質問を追加します。追加後、自動的に編集パネルが開きます。</p>
+  <p style="margin-top:8px"><b>質問タイプ</b></p>
+  <ul>
+    <li><span class="badge-demo" style="background:#E6F1FB;color:#0C447C">単一選択</span>：選択肢から1つだけ選ぶ（ラジオボタン）</li>
+    <li><span class="badge-demo" style="background:#E1F5EE;color:#085041">複数選択</span>：選択肢から複数選べる（チェックボックス）。「最低選択数」も設定可能</li>
+    <li><span class="badge-demo" style="background:#FAEEDA;color:#633806">自由記述</span>：テキストエリアのみ。プレースホルダー文言を設定できます</li>
+    <li><span class="badge-demo" style="background:#FBEAF0;color:#72243E">自由+選択肢</span>：選択肢＋自由記述テキストエリアの複合タイプ</li>
+  </ul>
+  <p style="margin-top:8px"><b>編集パネルの各設定</b></p>
+  <ul>
+    <li><b>選択肢</b>：テキストを直接編集できます。「×」で削除、「＋ 追加」で選択肢を増やします</li>
+    <li><b>最低選択数</b>：複数選択・自由+選択肢タイプで設定可。0 = 制限なし</li>
+    <li><b>必須</b>：ON にすると未回答での送信をブロックします</li>
+    <li><b>↑ / ↓</b>：質問の順序を変更できます</li>
+  </ul>
+  <div class="note">プレビューパネルはリアルタイムで更新されます。右パネルでフォームの見た目を確認しながら編集してください。</div>
+
+  <div class="sep"></div>
+  <h3>Step 5 &#x2014; エクスポートと公開</h3>
+  <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">HTMLをダウンロード</div><div class="step-desc">右パネルの「エクスポート」タブを開き、「HTMLダウンロード」をクリックします。ファイル名はアンケートのタイトルになります。</div></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">GitHub Pagesに公開</div><div class="step-desc">GitHubで新しいリポジトリを作成し、ダウンロードしたHTMLをアップロードします。リポジトリの Settings → Pages → Branch を <code style="background:#f4f4f2;padding:1px 5px;border-radius:4px;font-size:11px">main</code> に設定して公開します。公開URLは <code style="background:#f4f4f2;padding:1px 5px;border-radius:4px;font-size:11px">https://ユーザー名.github.io/リポジトリ名/ファイル名.html</code> になります。</div></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">はてなブログに埋め込む</div><div class="step-desc">「埋め込みコード」タブのiframeコードをコピーし、<code style="background:#f4f4f2;padding:1px 5px;border-radius:4px;font-size:11px">src=""</code> の値を実際の公開URLに書き換えてブログ記事のHTML編集欄に貼り付けます。</div></div></div>
+  <div class="note">はてなブログでiframeを使うには「はてなPro」プランが必要です。また、同一ドメインでない外部iframeはセキュリティポリシーにより表示されない場合があります。その場合はアンケートページへのリンクを直接貼ることで代替できます。</div>
+
+  <div class="sep"></div>
+  <h3>よくある質問</h3>
+  <ul>
+    <li><b>回答データはどこに保存されますか？</b><br>JSONBin.ioのBinに保存されます。無料プランでは最大10,000件まで保存可能です。</li>
+    <li style="margin-top:8px"><b>APIキーが流出しても大丈夫ですか？</b><br>JSONBinのAPIキーはHTMLソースに含まれるため、閲覧者がソースを見れば確認できます。書き込み専用キーを使うか、自前のバックエンド（GASなど）を挟むことを推奨します。</li>
+    <li style="margin-top:8px"><b>重複回答チェックは完璧ですか？</b><br>localStorageを使った簡易的なチェックのため、別のブラウザや別デバイスからの重複回答は防げません。本格的な制御にはログイン認証が必要です。</li>
+    <li style="margin-top:8px"><b>アンケートHTMLを修正したい</b><br>ダウンロードしたHTMLをテキストエディタで直接編集できます。</li>
+  </ul>
+</div>
+</div>
+
+</body>
+</html>
